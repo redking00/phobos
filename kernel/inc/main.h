@@ -1,0 +1,1 @@
+#define ADDR_TERMINAL_PRINTF (int*)0x100000
