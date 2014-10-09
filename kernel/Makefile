@@ -23,31 +23,49 @@ ${OBJDIR}/boot.o:${SRCDIR}/boot/boot.s
 	${AS} ${SRCDIR}/boot/boot.s -o ${OBJDIR}/boot.o
 
 
-s-build-main: ${OBJDIR}/main.o ${INCDIR}/*
+s-build-main: ${OBJDIR}/main.o
 
-${OBJDIR}/main.o: ${SRCDIR}/main/main.c ${INCDIR}/*
-	${GCC} -c ${SRCDIR}/main/main.c -o ${OBJDIR}/main.o ${GCCFLAGS}
+${OBJDIR}/main.o: ${INCDIR}/* \
+	 ${SRCDIR}/main/main.c
+	${GCC} -o ${OBJDIR}/main.o ${GCCFLAGS} -c \
+	 ${SRCDIR}/main/main.c
 
 s-build-terminal:  ${OBJDIR}/terminal.o
 
-${OBJDIR}/terminal.o: ${SRCDIR}/terminal/terminal.c ${INCDIR}/*
-	${GCC} -c ${SRCDIR}/terminal/terminal.c -o ${OBJDIR}/terminal.o ${GCCFLAGS}
+${OBJDIR}/terminal.o: ${INCDIR}/* \
+	 ${SRCDIR}/terminal/terminal.c
+	${GCC} -o ${OBJDIR}/terminal.o ${GCCFLAGS} -c \
+	 ${SRCDIR}/terminal/terminal.c
 
 s-build-disk:  ${OBJDIR}/disk.o ${OBJDIR}/ata.o
 
-${OBJDIR}/disk.o: ${SRCDIR}/disk/disk.c ${INCDIR}/*
-	${GCC} -c ${SRCDIR}/disk/disk.c -o ${OBJDIR}/disk.o ${GCCFLAGS}
+${OBJDIR}/disk.o: ${INCDIR}/* \
+	 ${SRCDIR}/disk/disk.c
+	${GCC} -o ${OBJDIR}/disk.o ${GCCFLAGS} -c \
+	 ${SRCDIR}/disk/disk.c
 
-${OBJDIR}/ata.o: ${SRCDIR}/disk/ata.asm
-	${NASM} ${NASMFLAGS} ${SRCDIR}/disk/ata.asm -o ${OBJDIR}/ata.o
+${OBJDIR}/ata.o: ${INCDIR}/* \
+	 ${SRCDIR}/disk/ata.asm
+	${NASM} ${NASMFLAGS} -o ${OBJDIR}/ata.o \
+	 ${SRCDIR}/disk/ata.asm
 
 
 
 s-link: ${BINDIR}/phobos.bin
 
-${BINDIR}/phobos.bin: ${OBJDIR}/boot.o ${OBJDIR}/main.o ${OBJDIR}/terminal.o ${OBJDIR}/disk.o ${OBJDIR}/ata.o ${SRCDIR}/linker.ld
-	${GCC} -T ${SRCDIR}/linker.ld -o ${BINDIR}/phobos.bin ${LDFLAGS} ${OBJDIR}/boot.o ${OBJDIR}/main.o ${OBJDIR}/terminal.o ${OBJDIR}/disk.o ${OBJDIR}/ata.o ${LIBGCC}
-
+${BINDIR}/phobos.bin: \
+	 ${OBJDIR}/boot.o \
+	 ${OBJDIR}/main.o \
+	 ${OBJDIR}/terminal.o \
+	 ${OBJDIR}/disk.o \
+	 ${OBJDIR}/ata.o \
+	 ${SRCDIR}/linker.ld
+	${GCC} -T ${SRCDIR}/linker.ld -o ${BINDIR}/phobos.bin ${LDFLAGS} ${LIBGCC} \
+	 ${OBJDIR}/boot.o \
+	 ${OBJDIR}/main.o \
+	 ${OBJDIR}/terminal.o \
+	 ${OBJDIR}/disk.o \
+	 ${OBJDIR}/ata.o
 clean:
 	rm -r -f ${OBJDIR}/*
 	rm -r -f ${BINDIR}/*
