@@ -7,8 +7,11 @@ BINDIR=./bin
 
 AS=${CROSSBINDIR}/${PLATFORM}-as
 GCC=${CROSSBINDIR}/${PLATFORM}-gcc
+NASM=nasm
 LIBGCC=-lgcc
-
+GCCFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra
+LDFLAGS=-ffreestanding -O2 -nostdlib
+NASMFLAGS=-f elf
 
 all: s-build s-link
 
@@ -23,27 +26,27 @@ ${OBJDIR}/boot.o:${SRCDIR}/boot/boot.s
 s-build-main: ${OBJDIR}/main.o ${INCDIR}/*
 
 ${OBJDIR}/main.o: ${SRCDIR}/main/main.c ${INCDIR}/*
-	${GCC} -c ${SRCDIR}/main/main.c -o ${OBJDIR}/main.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+	${GCC} -c ${SRCDIR}/main/main.c -o ${OBJDIR}/main.o ${GCCFLAGS}
 
 s-build-terminal:  ${OBJDIR}/terminal.o
 
 ${OBJDIR}/terminal.o: ${SRCDIR}/terminal/terminal.c ${INCDIR}/*
-	${GCC} -c ${SRCDIR}/terminal/terminal.c -o ${OBJDIR}/terminal.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+	${GCC} -c ${SRCDIR}/terminal/terminal.c -o ${OBJDIR}/terminal.o ${GCCFLAGS}
 
 s-build-disk:  ${OBJDIR}/disk.o ${OBJDIR}/ata.o
 
 ${OBJDIR}/disk.o: ${SRCDIR}/disk/disk.c ${INCDIR}/*
-	${GCC} -c ${SRCDIR}/disk/disk.c -o ${OBJDIR}/disk.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+	${GCC} -c ${SRCDIR}/disk/disk.c -o ${OBJDIR}/disk.o ${GCCFLAGS}
 
 ${OBJDIR}/ata.o: ${SRCDIR}/disk/ata.asm
-	nasm -f elf ${SRCDIR}/disk/ata.asm -o ${OBJDIR}/ata.o
+	${NASM} ${NASMFLAGS} ${SRCDIR}/disk/ata.asm -o ${OBJDIR}/ata.o
 
 
 
 s-link: ${BINDIR}/phobos.bin
 
 ${BINDIR}/phobos.bin: ${OBJDIR}/boot.o ${OBJDIR}/main.o ${OBJDIR}/terminal.o ${OBJDIR}/disk.o ${OBJDIR}/ata.o ${SRCDIR}/linker.ld
-	${GCC} -T ${SRCDIR}/linker.ld -o ${BINDIR}/phobos.bin -ffreestanding -O2 -nostdlib ${OBJDIR}/boot.o ${OBJDIR}/main.o ${OBJDIR}/terminal.o ${OBJDIR}/disk.o ${OBJDIR}/ata.o ${LIBGCC}
+	${GCC} -T ${SRCDIR}/linker.ld -o ${BINDIR}/phobos.bin ${LDFLAGS} ${OBJDIR}/boot.o ${OBJDIR}/main.o ${OBJDIR}/terminal.o ${OBJDIR}/disk.o ${OBJDIR}/ata.o ${LIBGCC}
 
 clean:
 	rm -r -f ${OBJDIR}/*
