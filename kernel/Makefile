@@ -1,4 +1,5 @@
-PLATFORM=i386-elf
+PLATFORM=i686-elf
+#PLATFORM=i386-elf
 CROSSBINDIR=/cross/${PLATFORM}/bin
 SRCDIR=./src
 INCDIR=./inc

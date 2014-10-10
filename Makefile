@@ -1,3 +1,6 @@
+INSTALL_VDI_PATH = /home/diego/VirtualBox\ VMs/phobos/phobos.vdi
+#INSTALL_VDI_PATH = /WinDesktop/phobos.vdi
+
 all: s-kernel-build s-linux-utils-build s-kernel-install
 
 s-kernel-build:
@@ -10,8 +13,8 @@ s-linux-utils-build:
 
 s-mount:
 	modprobe nbd
-	qemu-nbd -c /dev/nbd0 /WinDesktop/phobos.vdi
-	qemu-nbd -c /dev/nbd1 /WinDesktop/phobos.vdi -P1
+	qemu-nbd -c /dev/nbd0 ${INSTALL_VDI_PATH}
+	qemu-nbd -c /dev/nbd1 ${INSTALL_VDI_PATH} -P1
 	mount /dev/nbd1 /mnt/phobos
 
 s-copy: 
