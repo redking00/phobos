@@ -2,8 +2,8 @@
 
 #pragma pack(1)
 
-#define ADDR_DISK_MBR   0x200000
-#define ADDR_DISK_DAT_0 0x200000+512
+#define ADDR_DISK_MBR   (uint32_t)0x200000
+#define ADDR_DISK_DAT_0 (uint32_t)0x200000+512
 
 
 typedef struct partition_t{
@@ -24,6 +24,6 @@ typedef struct mbr_t{
 
 MBR* mbrdisk1;
 
-extern void ata_lba_read(int address,int sectors,int buffer);
+extern void ata_lba_read(uint32_t address,uint32_t sectors,uint32_t buffer);
 
 void init_disk();

@@ -16,7 +16,7 @@
 
 void export_api() {
 	// INIT KERNEL API
-	*(ADDR_TERMINAL_PRINTF)=(int)terminal_printf;
+	*(ADDR_TERMINAL_PRINTF)=(uint32_t)terminal_printf;
 
 }
 
@@ -24,7 +24,7 @@ void kernel_main()
 {
 	terminal_init();
 
-	terminal_printf("Phobos v%u.%u - %s\n",VERSION_MAJOR,VERSION_MINOR,VERSION_ALIAS);
+	terminal_printf((TEXTPOINTER)"Phobos v%u.%u - %s\n",VERSION_MAJOR,VERSION_MINOR,VERSION_ALIAS);
 
 	init_disk();
 }

@@ -1,13 +1,16 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#define SCREEN_BUFFER (uint8_t*)0XB8000
+#define TEXTPOINTER uint8_t*
+
+#define SCREEN_BUFFER (TEXTPOINTER) 0xB8000
 #define SCREEN_COLS 80
 #define SCREEN_ROWS 25
+#define TERMINAL_DEFAULT_STYLE (uint8_t)10
 
 
 void terminal_init();
 
-void terminal_printf(const char* string,...);
+void terminal_printf(const TEXTPOINTER,...);
 
-int str_equal(char*,char*,unsigned int);
+uint16_t str_equal(TEXTPOINTER,TEXTPOINTER,uint16_t);
