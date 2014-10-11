@@ -40,19 +40,20 @@ int main (int argc, char** argv) {
     }
     
     printf("Total blocks: %lu\n",totalsectors);
-
+   
+    strcpy((char*)bootsector.fsid,"PHOBOSFS");
     strcpy((char*)bootsector.volumeid,argv[2]);
-
     bootsector.sut_first_sector=1;
+
     bootsector.sut_size=((totalsectors-1)/513);
-    
     datasectors=totalsectors-bootsector.sut_size-1;
 
+    printf("FSID = %s\n",bootsector.fsid);
     printf("VOLUMEID = %s\n",bootsector.volumeid);
     printf("SUT size = %u sectors for %u sectors of data\n",bootsector.sut_size,bootsector.sut_size*512);
     printf("%lu sectors lost.\n",datasectors-(bootsector.sut_size*512));
 
-    if (lseek(fd,1,SEEK_SET)<0){
+    if (lseek(fd,0,SEEK_SET)<0){
         close(fd);
         printf("Error seeking in %s\n",argv[1]);
         perror("lseek: ");
@@ -67,6 +68,7 @@ int main (int argc, char** argv) {
     }
     printf("Write bootsector ok\n");
     
+
     for (n=0;n<bootsector.sut_size;n++) {
         if (write(fd,&emptysector,512)<0) {
             close(fd);
@@ -76,6 +78,7 @@ int main (int argc, char** argv) {
         }
     }
     printf("Write SUT ok\n");
+
     
     close(fd);
 
