@@ -88,7 +88,7 @@ DIRECTORYENTRY* findEntry (DIRECTORYSECTOR* dirsector,uint8_t *name) {
            if(!strcmp(name,dirsector->entry[n].name)) return &(dirsector->entry[n]);
         }
         if (dirsector->down_sector>0) {
-            if (lseek(fd,512+(bootsector.sut_size*512)+(dirsector->down_sector*512),SEEK_SET)<0){
+            if (lseek(fd,512+(bootsector.sut_size*512)+((dirsector->down_sector-1)*512),SEEK_SET)<0){
                 close(fd);
                 perror("lseek error: ");
                 exit(-1);

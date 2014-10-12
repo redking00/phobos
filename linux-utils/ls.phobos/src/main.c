@@ -10,6 +10,34 @@
 DIRECTORYSECTOR dirsector;
 BOOTSECTOR bootsector;
 int fd;
+
+void listdir(DIRECTORYSECTOR* dirsector) {
+    int n;
+    int cont;
+    do {
+        cont = 0;
+        for (n=0;n<4;n++) {
+            if (dirsector->entry[n].type>0)
+                printf("%s\n",dirsector->entry[n].name);
+        }
+        if (dirsector->down_sector>0) {
+            if (lseek(fd,512+(bootsector.sut_size*512)+((dirsector->down_sector-1)*512),SEEK_SET)<0){
+                close(fd);
+                perror("lseek error: ");
+                exit(-1);
+            }
+            if(read(fd,&dirsector,512)<0) {
+                close(fd);
+                perror("read: error");
+                exit(-1);
+            }
+            cont=1;
+        } 
+    }   while(cont);    
+}
+
+
+
 int main (int argc, char **argv) {
     unsigned long totalsectors;
 
@@ -65,27 +93,3 @@ int main (int argc, char **argv) {
     
 }
 
-void listdir(DIRECTORYSECTOR* dirsector) {
-    int n;
-    int cont;
-    do {
-        cont = 0;
-        for (n=0;n<4;n++) {
-            if (dirsector->entry[n].type>0)
-                printf("%s\n",dirsector->entry[n].name);
-        }
-        if (dirsector->down_sector>0) {
-            if (lseek(fd,512+(bootsector.sut_size*512)+(dirsector->down_sector*512),SEEK_SET)<0){
-                close(fd);
-                perror("lseek error: ");
-                exit(-1);
-            }
-            if(read(fd,&dirsector,512)<0) {
-                close(fd);
-                perror("read: error");
-                exit(-1);
-            }
-            cont=1;
-        } 
-    }   while(cont);    
-}
