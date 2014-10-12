@@ -9,7 +9,6 @@
 int main (int argc, char **argv) {
     unsigned long totalsectors;
     BOOTSECTOR bootsector;
-    ENTRYSECTOR rootsector;
 
     if (argc<3) {
         printf("usage: ls.phobos <device> <path>\n",argv[1]);
@@ -49,7 +48,10 @@ int main (int argc, char **argv) {
         return -1;
     }
 
-    if(read(fd,&rootsector,512)<0) {
+    
+    DIRECTORYSECTOR dirsector;
+    
+    if(read(fd,&dirsector,512)<0) {
         close(fd);
         printf("Error reading in %s\n",argv[1]);
         perror("read: ");
@@ -58,8 +60,8 @@ int main (int argc, char **argv) {
     
     int n;
     for (n=0;n<4;n++) {
-        if (rootsector.entry[n].type>0)
-            printf("%s\n",rootsector.entry[n].name);
+        if (dirsector.entry[n].type>0)
+            printf("%s\n",dirsector.entry[n].name);
     }
 
     

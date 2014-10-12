@@ -9,7 +9,6 @@
 int main (int argc, char **argv) {
     unsigned long totalsectors;
     BOOTSECTOR bootsector;
-    ENTRYSECTOR rootsector;
 
     if (argc<3) {
         printf("usage: ls.phobos <device> <path>\n",argv[1]);
@@ -48,7 +47,10 @@ int main (int argc, char **argv) {
         perror("lseek: ");
         return -1;
     }
-    if(read(fd,&rootsector,512)<0) {
+
+    DIRECTORYSECTOR dirsector;
+
+    if(read(fd,&dirsector,512)<0) {
         close(fd);
         printf("Error reading in %s\n",argv[1]);
         perror("read: ");
