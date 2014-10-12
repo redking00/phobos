@@ -37,8 +37,9 @@ typedef struct entrysector_t {
 typedef struct datasector_t {
     uint32_t top_e_sector;
     uint8_t  top_e_index;
-    uint8_t  size_in_bytes;
-    uint8_t  data[506];
+    uint32_t down_e_sector;
+    uint8_t  down_e_index;
+    uint8_t  data[502];
 }DATASECTOR;
 
 
