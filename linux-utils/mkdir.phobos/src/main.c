@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <strings.h>
 #include <fcntl.h>
@@ -6,16 +7,20 @@
 
 #include "../../../kernel/inc/filesystem.h"
 
+BOOTSECTOR bootsector;
+DIRECTORYSECTOR dirsector;
+
+int fd; 
+
 int main (int argc, char **argv) {
     unsigned long totalsectors;
-    BOOTSECTOR bootsector;
 
     if (argc<3) {
         printf("usage: ls.phobos <device> <path>\n",argv[1]);
         return -1;
     }
     
-    int fd = open(argv[1],O_RDWR);
+    fd = open(argv[1],O_RDWR);
 
     if (fd<0) {
         printf("Error opening %s\n",argv[1]);
@@ -48,7 +53,6 @@ int main (int argc, char **argv) {
         return -1;
     }
 
-    DIRECTORYSECTOR dirsector;
 
     if(read(fd,&dirsector,512)<0) {
         close(fd);
@@ -73,4 +77,30 @@ int main (int argc, char **argv) {
     
     close(fd);
     
+}
+
+DIRECTORYENTRY* findEntry (DIRECTORYSECTOR* dirsector,uint8_t *name) {
+    int n;
+    int cont;
+    do {
+        cont = 0;
+        for (n=0;n<4;n++) {
+           if(!strcmp(name,dirsector->entry[n].name)) return &(dirsector->entry[n]);
+        }
+        if (dirsector->down_sector>0) {
+            if (lseek(fd,512+(bootsector.sut_size*512)+(dirsector->down_sector*512),SEEK_SET)<0){
+                close(fd);
+                perror("lseek error: ");
+                exit(-1);
+            }
+            if(read(fd,&dirsector,512)<0) {
+                close(fd);
+                perror("read error: ");
+                exit(-1);
+            }
+            cont=1;
+        } 
+    }   while(cont);
+    
+    return NULL;
 }
