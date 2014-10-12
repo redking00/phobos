@@ -1,3 +1,5 @@
+//********************* NOT WORKING 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -17,8 +19,14 @@ void listdir(DIRECTORYSECTOR* dirsector) {
     do {
         cont = 0;
         for (n=0;n<4;n++) {
-            if (dirsector->entry[n].type>0)
-                printf("%s\n",dirsector->entry[n].name);
+            if (dirsector->entry[n].type>0){
+                switch(dirsector->entry[n].type){
+                    case DIRECTORY_ENTRY: printf("[DIR] %s\n",dirsector->entry[n].name); break;    
+                    case FILE_ENTRY: printf("[FILE] %s\n",dirsector->entry[n].name); break;   
+                    default: printf("[UNKN] %s\n",dirsector->entry[n].name);
+                }
+                
+            }
         }
         if (dirsector->down_sector>0) {
             if (lseek(fd,512+(bootsector.sut_size*512)+((dirsector->down_sector-1)*512),SEEK_SET)<0){

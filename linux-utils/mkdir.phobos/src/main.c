@@ -1,3 +1,5 @@
+//********************* NOT WORKING 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -9,14 +11,133 @@
 
 BOOTSECTOR bootsector;
 DIRECTORYSECTOR dirsector;
+uint32_t dirsectornumber;
+uint32_t dirsectorindex;
+DIRECTORYSECTOR exdirsector;
+uint32_t exdirsectornumber;
+DIRECTORYSECTOR elementdirsector;
+uint32_t elementdirsectornumber;
+DIRECTORYENTRY* direntry;
+
+uint8_t sutsector[512];
+uint32_t sutesectornumber;
+
+char path[1024];
+char resultpath[1024];
+char element[116];
 
 int fd; 
+
+
+DIRECTORYENTRY* findentry (uint8_t *name) {
+    int n;
+    int cont;
+    do {
+        cont = 0;
+        for (n=0;n<4;n++) {
+           if(!strcmp(name,dirsector.entry[n].name)) return &(dirsector.entry[n]);
+        }
+        if (dirsector.down_sector>0) {
+            dirsectornumber = dirsector.down_sector;
+            readsector(&dirsector,bootsector.sut_size+dirsector.down_sector);
+            cont=1;
+        } 
+    }   while(cont);
+    
+    return NULL;
+}
+
+DIRECTORYENTRY* findemptyentry () {
+    int n;
+    int cont;
+    do {
+        cont = 0;
+        for (n=0,dirsectorindex=0;n<4;n++,dirsectorindex++) {
+           if (dirsector.entry[n].type==DELETED_ENTRY) return &(dirsector.entry[n]);
+        }
+        if (dirsector.down_sector>0) {
+            dirsectornumber = dirsector.down_sector;
+            readsector(&dirsector,bootsector.sut_size+dirsector.down_sector);
+            cont=1;
+        }
+    }   while(cont);
+    
+    return NULL;
+}
+
+void findfreesector() {
+    int n,m;
+    exdirsectornumber = 0;
+    for (n=0;n<bootsector.sut_size;n++) {
+        readsector(&sutsector,1+n);
+        for (m=0;m<512;m++) if (sutsector[m]==0) {
+            sutsector[m]=1;
+            writesector(&sutsector,1+n);
+            exdirsectornumber = ((n*512)+m)+1;
+            readsector(&exdirsector,bootsector.sut_size+exdirsectornumber);
+            printf("allocated %u sector\n",exdirsectornumber);
+            return;
+        }
+    }
+}
+
+void readsector(DIRECTORYSECTOR* sec,uint32_t secnum) {
+    if (lseek(fd,secnum*512,SEEK_SET)<0){
+        close(fd);
+        perror("lseek error: ");
+        exit(-1);
+    }
+    if(read(fd,sec,512)<0) {
+        close(fd);
+        perror("read error: ");
+        exit(-1);
+    }    
+}
+
+void writesector(DIRECTORYSECTOR* sec,uint32_t secnum) {
+    if (lseek(fd,secnum*512,SEEK_SET)<0){
+        close(fd);
+        perror("lseek error: ");
+        exit(-1);
+    }
+    if(write(fd,sec,512)<0) {
+        close(fd);
+        perror("read error: ");
+        exit(-1);
+    }    
+}
+
+
+
+void getpathelement(char* path,char* resultpath,char* element) {
+    int n,m;
+    char d;
+    element[0]=0;
+    resultpath[0]=0;
+    
+    if (path[0]=='/') n=1; else n=0;
+    
+    for (m=0;n<116;n++,m++) {
+        d=path[n];
+        if ((d=='/')||(d==0)) break;
+        else element[m]=d;
+    }
+    element[m]=0;
+    m=0;
+    while(d!=0) {
+        d=path[n];
+        resultpath[m]=d;
+        m++;
+        n++;
+    }
+    if(!strcmp(resultpath,"/")) resultpath[0]=0;
+}
 
 int main (int argc, char **argv) {
     unsigned long totalsectors;
 
     if (argc<3) {
-        printf("usage: ls.phobos <device> <path>\n",argv[1]);
+        printf("usage: mkdir.phobos <device> <path>\n",argv[1]);
         return -1;
     }
     
@@ -32,75 +153,92 @@ int main (int argc, char **argv) {
         printf("Error getting block info in %s, is device mounted?\n",argv[1]);
         return -1;
     }
-    if (lseek(fd,0,SEEK_SET)<0){
-        close(fd);
-        printf("Error seeking in %s\n",argv[1]);
-        perror("lseek: ");
-        return -1;
-    }
     
-    if(read(fd,&bootsector,512)<0) {
-        close(fd);
-        printf("Error reading in %s\n",argv[1]);
-        perror("read: ");
-        return -1;
-    }
-    
-    if (lseek(fd,512+(bootsector.sut_size*512),SEEK_SET)<0){
-        close(fd);
-        printf("Error seeking in %s\n",argv[1]);
-        perror("lseek: ");
-        return -1;
-    }
+    readsector(&bootsector,0);
 
-
-    if(read(fd,&dirsector,512)<0) {
-        close(fd);
-        printf("Error reading in %s\n",argv[1]);
-        perror("read: ");
-        return -1;
-    }    
-
-    int n,m;
-    char dirname[103];
-    char d;
-    char *path = &argv[2][0];
+    dirsectornumber = 1;
     
-    for (n=0;n<103;n++)dirname[n]=0;
-    if (path[0]=='/') n=1; else n=0;
-    for (m=0;n<103;n++,m++) {
-        d=path[n];
-        if ((d=='/')||(d==0)) break;
-        else dirname[m]=d;
+    readsector(&dirsector,bootsector.sut_size+dirsectornumber);
+    
+    strcpy(path,argv[2]);
+
+    strcpy(resultpath,path);
+
+    while (strlen(resultpath)>0) {
+        
+        getpathelement(path,resultpath,element);
+        
+        printf("%s -> %s -> %s \n",path,resultpath,element);
+        
+        memcpy(&elementdirsector,&dirsector,512);
+        
+        if ((direntry = findentry(element))==NULL){
+            if (strlen(resultpath)>0) {
+                close(fd);
+                printf("error path element not found: %s\n",element);
+                return -1;
+            }
+            else {
+                printf("CREANDO CARPETA: %s\n",element);
+                memcpy(&dirsector,&elementdirsector,512);
+                if ((direntry = findemptyentry())==NULL) {
+                    printf("no room in elementdirsector %s\n",element);
+                    printf("allocating extension dirsector\n");
+                    findfreesector();
+                    if (!exdirsectornumber) {
+                        printf("Error no more space in disk\n");
+                        return -1;
+                    }
+                    printf("linking extension dirsector\n");
+                    dirsector.down_sector = exdirsectornumber;
+                    writesector(&dirsector,bootsector.sut_size+dirsectornumber);
+                    exdirsector.up_sector = dirsectornumber;
+                    exdirsector.up_index = 0;
+                    exdirsector.down_sector = 0;
+                    exdirsector.entry[0].type=DELETED_ENTRY;
+                    exdirsector.entry[1].type=DELETED_ENTRY;
+                    exdirsector.entry[2].type=DELETED_ENTRY;
+                    exdirsector.entry[3].type=DELETED_ENTRY;
+                    memcpy (&dirsector,&exdirsector,512);
+                    dirsectornumber=exdirsectornumber;
+                    dirsectorindex=0;
+                    direntry = &(dirsector.entry[0]);
+                }
+                printf("allocating the new dirsector\n");
+                findfreesector();
+                if (!exdirsectornumber) {
+                    printf("Error no more space in disk\n");
+                    return -1;
+                }
+                exdirsector.up_sector = dirsectornumber;
+                exdirsector.up_index = dirsectorindex;
+                exdirsector.down_sector = 0;
+                exdirsector.entry[0].type=DELETED_ENTRY;
+                exdirsector.entry[1].type=DELETED_ENTRY;
+                exdirsector.entry[2].type=DELETED_ENTRY;
+                exdirsector.entry[3].type=DELETED_ENTRY;
+                writesector(&exdirsector,bootsector.sut_size+exdirsectornumber);
+                strcpy(direntry->name,element);
+                direntry->sector=exdirsectornumber;
+                direntry->type=DIRECTORY_ENTRY;
+                writesector(&dirsector,bootsector.sut_size+dirsectornumber);
+                printf("updated %u\n",dirsectornumber);
+                return 0;
+            }
+        }
+        if (direntry->type==DIRECTORY_ENTRY) {
+            printf("entering element: %s\n",element);
+            readsector(&dirsector,bootsector.sut_size+direntry->sector);
+            dirsectornumber = direntry->sector;
+        }
+        else {
+            close(fd);
+            printf("error not directory in path\n");
+            return -1;            
+        }
+        strcpy(path,resultpath);
     }
-    
     
     close(fd);
     
-}
-
-DIRECTORYENTRY* findEntry (DIRECTORYSECTOR* dirsector,uint8_t *name) {
-    int n;
-    int cont;
-    do {
-        cont = 0;
-        for (n=0;n<4;n++) {
-           if(!strcmp(name,dirsector->entry[n].name)) return &(dirsector->entry[n]);
-        }
-        if (dirsector->down_sector>0) {
-            if (lseek(fd,512+(bootsector.sut_size*512)+((dirsector->down_sector-1)*512),SEEK_SET)<0){
-                close(fd);
-                perror("lseek error: ");
-                exit(-1);
-            }
-            if(read(fd,&dirsector,512)<0) {
-                close(fd);
-                perror("read error: ");
-                exit(-1);
-            }
-            cont=1;
-        } 
-    }   while(cont);
-    
-    return NULL;
 }

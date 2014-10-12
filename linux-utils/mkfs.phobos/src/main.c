@@ -67,9 +67,24 @@ int main (int argc, char** argv) {
         return -1;
     }
     printf("Write bootsector ok\n");
+    uint8_t b = 1;
+    if (write(fd,&b,1)<0) {
+        close(fd);
+        printf("Error writting SUT sector1 %u\n",n);
+        perror("write: ");
+        return -1;
+    }
+    b=0;
+    for (n=0;n<511;n++) {
+        if (write(fd,&b,1)<0) {
+            close(fd);
+            printf("Error writting SUT sector1 %u\n",n);
+            perror("write: ");
+            return -1;
+        }
+    }
     
-
-    for (n=0;n<bootsector.sut_size;n++) {
+    for (n=0;n<bootsector.sut_size-1;n++) {
         if (write(fd,&emptysector,512)<0) {
             close(fd);
             printf("Error writting SUT sector %u\n",n);
