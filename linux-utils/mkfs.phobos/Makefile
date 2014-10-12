@@ -1,7 +1,7 @@
 SRCDIR=./src
 INCDIR=./inc
 OBJDIR=./obj
-BINDIR=./bin
+BINDIR=./../bin
 
 GCC=gcc
 
@@ -14,4 +14,3 @@ ${BINDIR}/mkfs.phobos: ${SRCDIR}/main.c
 
 clean:
 	rm -r -f ${OBJDIR}/*
-	rm -r -f ${BINDIR}/*

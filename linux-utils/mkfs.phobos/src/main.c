@@ -79,6 +79,21 @@ int main (int argc, char** argv) {
     }
     printf("Write SUT ok\n");
 
+    ENTRYSECTOR rootsector;
+
+    rootsector.entry[0].type=DELETED_ENTRY;
+    rootsector.entry[1].type=DELETED_ENTRY;
+    rootsector.entry[2].type=DELETED_ENTRY;
+    rootsector.entry[3].type=DELETED_ENTRY;
+    
+    if (write(fd,&rootsector,512)<0) {
+        close(fd);
+        printf("Error writting ROOT sector %u\n",n);
+        perror("write: ");
+        return -1;
+    }
+
+    printf("Write root ok\n");
     
     close(fd);
 

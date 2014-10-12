@@ -1,5 +1,7 @@
 /nbproject/
 /kernel/bin/
 /kernel/obj/
-/linux-utils/mkfs.phobos/bin/
+/linux-utils/bin/
 /linux-utils/mkfs.phobos/obj/
+/linux-utils/ls.phobos/obj/
+/linux-utils/mkdir.phobos/obj/
