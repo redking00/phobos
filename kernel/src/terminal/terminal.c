@@ -113,7 +113,9 @@ void terminal_printf(const TEXTPOINTER string,...) {
 
 uint16_t str_equal(TEXTPOINTER str1, TEXTPOINTER str2 ,uint16_t n) {
     for (unsigned  i=0;i<n;i++) {
-        if ((*(str1+i)!=*(str2+i))||(*(str1+i)==0)||(*(str2+i)==0))return 0;
+        if ((*(str1+i)!=*(str2+i))
+                ||((*(str1+i)==0)&&(*(str2+i)!=0))
+                ||((*(str2+i)==0)&&(*(str1+i)!=0)))return 0;
     }
     return 1;
 }
