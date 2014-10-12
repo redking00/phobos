@@ -2,7 +2,7 @@
 #include "../../inc/terminal.h"
 #include "../../inc/filesystem.h"
 
-void init_disk() {
+void disk_init() {
 
     ata_lba_read(0,1,ADDR_DISK_MBR);
     mbrdisk1=(MBR*)(ADDR_DISK_MBR);

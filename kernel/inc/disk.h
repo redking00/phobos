@@ -23,4 +23,4 @@ MBR* mbrdisk1;
 
 extern void ata_lba_read(uint32_t address,uint32_t sectors,uint32_t buffer);
 
-void init_disk();
+void disk_init();
