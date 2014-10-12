@@ -81,7 +81,17 @@ int main (int argc, char** argv) {
 
     ENTRYSECTOR rootsector;
 
-    rootsector.entry[0].type=DELETED_ENTRY;
+    rootsector.entry[0].type=DIRECTORY_ENTRY;
+    rootsector.entry[0].top_e_sector=0;
+    rootsector.entry[0].top_e_index=0;
+    rootsector.entry[0].down_e_sector=0;
+    rootsector.entry[0].down_e_index=0;
+    rootsector.entry[0].left_e_sector=0;
+    rootsector.entry[0].left_e_index=0;
+    rootsector.entry[0].right_e_sector=0;
+    rootsector.entry[0].right_e_index=0;
+    rootsector.entry[0].size_in_bytes=0;
+    strcpy(rootsector.entry[0].name,"/");
     rootsector.entry[1].type=DELETED_ENTRY;
     rootsector.entry[2].type=DELETED_ENTRY;
     rootsector.entry[3].type=DELETED_ENTRY;
