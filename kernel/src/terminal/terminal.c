@@ -12,10 +12,6 @@ void terminal_init() {
 	}
 }
 
-void terminal_printString(TEXTPOINTER string) {
-	terminal_printf(string);
-}
-
 void terminal_printInt(int32_t n) {
 	uint32_t m;
 	uint32_t i;
@@ -83,7 +79,8 @@ void terminal_printf(const TEXTPOINTER string,...) {
 						n++;
 						break;
 					case 's': 
-						terminal_printString(va_arg(arguments,TEXTPOINTER ));
+						//terminal_printString(va_arg(arguments,TEXTPOINTER ));
+                                                terminal_printf(va_arg(arguments,TEXTPOINTER ));
 						n++;
 						break;
 				}
