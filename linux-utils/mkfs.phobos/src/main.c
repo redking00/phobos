@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <fcntl.h>
@@ -6,38 +7,71 @@
 
 #include "../../../kernel/inc/filesystem.h"
 
-int main (int argc, char** argv) {
-    
-    BOOTSECTOR bootsector;
-    
-    uint8_t emptysector[512];
-    
-    int n;
-    
-    unsigned long totalsectors;
-    unsigned long datasectors;
-    
-    for (n=0;n<512;n++) emptysector[n]=0;
-    
-    printf("mkfs.phobos\n");
 
+BOOTSECTOR bootsector;
+DIRECTORYSECTOR dirsector;
+uint8_t emptysector[512];
+unsigned long totalsectors;
+unsigned long datasectors;
+
+int fd;
+
+
+void readsector(void* sec,uint32_t secnum) {
+    if (lseek(fd,secnum*512,SEEK_SET)<0){
+        close(fd);
+        perror("lseek error: ");
+        exit(-1);
+    }
+    if(read(fd,sec,512)<0) {
+        close(fd);
+        perror("read error: ");
+        exit(-1);
+    }    
+}
+
+void writesector(void* sec,uint32_t secnum) {
+    if (lseek(fd,secnum*512,SEEK_SET)<0){
+        close(fd);
+        perror("lseek error: ");
+        exit(-1);
+    }
+    if(write(fd,sec,512)<0) {
+        close(fd);
+        perror("read error: ");
+        exit(-1);
+    }    
+}
+
+void checkarguments(int argc, char **argv) {
     if (argc<3) {
         printf("usage: mkfs.phobos <device> <volumeid>\n");
-        return -1;
+        exit(-1);
     }
-    
-    int fd = open(argv[1],O_RDWR);
+}
 
+void opendevicefile(char* devicefilename) {
+    fd = open(devicefilename,O_RDWR);
     if (fd<0) {
-        printf("Error opening %s\n",argv[1]);
-        return -1;
+        printf("Error opening %s\n",devicefilename);
+        exit(-1);
     }
-    
     if ((ioctl(fd,BLKGETSIZE,&totalsectors)<0)||(totalsectors==0)) {
         close(fd);
-        printf("Error getting block info in %s, is device mounted?\n",argv[1]);
-        return -1;
+        printf("Error getting block info in %s, is device mounted?\n",devicefilename);
+        exit (-1);
     }
+}
+
+int main (int argc, char** argv) {
+    int n;
+
+    for (n=0;n<512;n++) emptysector[n]=0;
+
+    printf("mkfs.phobos\n");
+
+    checkarguments(argc,argv);
+    opendevicefile(argv[1]);
     
     printf("Total blocks: %lu\n",totalsectors);
    
@@ -53,48 +87,20 @@ int main (int argc, char** argv) {
     printf("SUT size = %u sectors for %u sectors of data\n",bootsector.sut_size,bootsector.sut_size*512);
     printf("%lu sectors lost.\n",datasectors-(bootsector.sut_size*512));
 
-    if (lseek(fd,0,SEEK_SET)<0){
-        close(fd);
-        printf("Error seeking in %s\n",argv[1]);
-        perror("lseek: ");
-        return -1;
-    }
     
-    if (write(fd,&bootsector,512)<0) {
-        close(fd);
-        printf("Error writting bootsector in %s\n",argv[1]);
-        perror("write: ");
-        return -1;
-    }
+    writesector(&bootsector,0);
+
     printf("Write bootsector ok\n");
-    uint8_t b = 1;
-    if (write(fd,&b,1)<0) {
-        close(fd);
-        printf("Error writting SUT sector1 %u\n",n);
-        perror("write: ");
-        return -1;
-    }
-    b=0;
-    for (n=0;n<511;n++) {
-        if (write(fd,&b,1)<0) {
-            close(fd);
-            printf("Error writting SUT sector1 %u\n",n);
-            perror("write: ");
-            return -1;
-        }
-    }
     
+
+    emptysector[0] = 1;
+    writesector(&emptysector,1);
+    emptysector[0] = 0;
     for (n=0;n<bootsector.sut_size-1;n++) {
-        if (write(fd,&emptysector,512)<0) {
-            close(fd);
-            printf("Error writting SUT sector %u\n",n);
-            perror("write: ");
-            return -1;
-        }
+        writesector(&emptysector,2+n);
     }
     printf("Write SUT ok\n");
 
-    DIRECTORYSECTOR dirsector;
     
     dirsector.up_sector=0;
     dirsector.down_sector=0;
@@ -104,12 +110,7 @@ int main (int argc, char** argv) {
     dirsector.entry[2].type=DELETED_ENTRY;
     dirsector.entry[3].type=DELETED_ENTRY;
     
-    if (write(fd,&dirsector,512)<0) {
-        close(fd);
-        printf("Error writting ROOT sector %u\n",n);
-        perror("write: ");
-        return -1;
-    }
+    writesector(&dirsector,1+bootsector.sut_size);
 
     printf("Write root ok\n");
     
