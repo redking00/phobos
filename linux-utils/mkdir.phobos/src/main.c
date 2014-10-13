@@ -1,5 +1,3 @@
-//********************* NOT WORKING 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -22,6 +20,8 @@ DIRECTORYENTRY* direntry;
 uint8_t sutsector[512];
 uint32_t sutesectornumber;
 
+unsigned long totalsectors;
+
 char path[1024];
 char resultpath[1024];
 char element[116];
@@ -29,13 +29,41 @@ char element[116];
 int fd; 
 
 
+void readsector(void* sec,uint32_t secnum) {
+    if (lseek(fd,secnum*512,SEEK_SET)<0){
+        close(fd);
+        perror("lseek error: ");
+        exit(-1);
+    }
+    if(read(fd,sec,512)<0) {
+        close(fd);
+        perror("read error: ");
+        exit(-1);
+    }    
+}
+
+void writesector(void* sec,uint32_t secnum) {
+    if (lseek(fd,secnum*512,SEEK_SET)<0){
+        close(fd);
+        perror("lseek error: ");
+        exit(-1);
+    }
+    if(write(fd,sec,512)<0) {
+        close(fd);
+        perror("read error: ");
+        exit(-1);
+    }    
+}
+
 DIRECTORYENTRY* findentry (uint8_t *name) {
     int n;
     int cont;
     do {
+        printf("findentry in %u\n",dirsectornumber);
         cont = 0;
         for (n=0;n<4;n++) {
-           if(!strcmp(name,dirsector.entry[n].name)) return &(dirsector.entry[n]);
+           if((dirsector.entry[n].type!=DELETED_ENTRY)
+                   &&(!strcmp(name,dirsector.entry[n].name))) return &(dirsector.entry[n]);
         }
         if (dirsector.down_sector>0) {
             dirsectornumber = dirsector.down_sector;
@@ -81,34 +109,6 @@ void findfreesector() {
     }
 }
 
-void readsector(DIRECTORYSECTOR* sec,uint32_t secnum) {
-    if (lseek(fd,secnum*512,SEEK_SET)<0){
-        close(fd);
-        perror("lseek error: ");
-        exit(-1);
-    }
-    if(read(fd,sec,512)<0) {
-        close(fd);
-        perror("read error: ");
-        exit(-1);
-    }    
-}
-
-void writesector(DIRECTORYSECTOR* sec,uint32_t secnum) {
-    if (lseek(fd,secnum*512,SEEK_SET)<0){
-        close(fd);
-        perror("lseek error: ");
-        exit(-1);
-    }
-    if(write(fd,sec,512)<0) {
-        close(fd);
-        perror("read error: ");
-        exit(-1);
-    }    
-}
-
-
-
 void getpathelement(char* path,char* resultpath,char* element) {
     int n,m;
     char d;
@@ -133,26 +133,33 @@ void getpathelement(char* path,char* resultpath,char* element) {
     if(!strcmp(resultpath,"/")) resultpath[0]=0;
 }
 
-int main (int argc, char **argv) {
-    unsigned long totalsectors;
-
+void checkarguments(int argc,char **argv) {
     if (argc<3) {
         printf("usage: mkdir.phobos <device> <path>\n",argv[1]);
-        return -1;
+        exit (-1);
     }
-    
-    fd = open(argv[1],O_RDWR);
+}
+
+void opendevicefile(char* devicefilepath) {
+    fd = open(devicefilepath,O_RDWR);
 
     if (fd<0) {
-        printf("Error opening %s\n",argv[1]);
-        return -1;
+        printf("Error opening %s\n",devicefilepath);
+        exit (-1);
     }
     
     if ((ioctl(fd,BLKGETSIZE,&totalsectors)<0)||(totalsectors==0)) {
         close(fd);
-        printf("Error getting block info in %s, is device mounted?\n",argv[1]);
-        return -1;
+        printf("Error getting block info in %s, is device mounted?\n",devicefilepath);
+        exit(-1);
     }
+}
+
+int main (int argc, char **argv) {
+
+    checkarguments(argc,argv);
+    
+    opendevicefile(argv[1]);
     
     readsector(&bootsector,0);
 
@@ -192,6 +199,7 @@ int main (int argc, char **argv) {
                     printf("linking extension dirsector\n");
                     dirsector.down_sector = exdirsectornumber;
                     writesector(&dirsector,bootsector.sut_size+dirsectornumber);
+                    printf("updated %u\n",dirsectornumber);
                     exdirsector.up_sector = dirsectornumber;
                     exdirsector.up_index = 0;
                     exdirsector.down_sector = 0;
@@ -228,8 +236,8 @@ int main (int argc, char **argv) {
         }
         if (direntry->type==DIRECTORY_ENTRY) {
             printf("entering element: %s\n",element);
-            readsector(&dirsector,bootsector.sut_size+direntry->sector);
             dirsectornumber = direntry->sector;
+            readsector(&dirsector,bootsector.sut_size+direntry->sector);
         }
         else {
             close(fd);
