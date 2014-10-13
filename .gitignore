@@ -5,3 +5,4 @@
 /linux-utils/mkfs.phobos/obj/
 /linux-utils/ls.phobos/obj/
 /linux-utils/mkdir.phobos/obj/
+/linux-utils/cp.phobos/obj/

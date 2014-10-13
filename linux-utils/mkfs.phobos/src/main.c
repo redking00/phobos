@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <strings.h>
+#include <string.h>
 #include <fcntl.h>
 #include <linux/fs.h>
 

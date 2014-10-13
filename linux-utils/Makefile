@@ -1,4 +1,4 @@
-all: s-build-mkfs s-build-ls s-build-mkdir
+all: s-build-mkfs s-build-ls s-build-mkdir s-build-cp
 
 s-build-mkfs:
 	cd mkfs.phobos && make
@@ -9,7 +9,10 @@ s-build-ls:
 s-build-mkdir:
 	cd mkdir.phobos && make
 
-clean: clean-bin clean-mkfs clean-ls clean-mkdir
+s-build-cp:
+	cd cp.phobos && make	
+
+clean: clean-bin clean-mkfs clean-ls clean-mkdir clean-cp
 
 clean-bin:
 	rm -r -f ./bin/*
@@ -22,3 +25,8 @@ clean-ls:
 
 clean-mkdir:
 	cd mkdir.phobos && make clean
+
+clean-cp:
+	cd cp.phobos && make clean
+	
+	
