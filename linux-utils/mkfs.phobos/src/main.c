@@ -22,7 +22,7 @@ int main (int argc, char** argv) {
     printf("mkfs.phobos\n");
 
     if (argc<3) {
-        printf("usage: mkfs.phobos <device> <volumeid>\n",argv[1]);
+        printf("usage: mkfs.phobos <device> <volumeid>\n");
         return -1;
     }
     

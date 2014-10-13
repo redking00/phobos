@@ -18,6 +18,8 @@ char path[1024];
 char resultpath[1024];
 char element[116];
 
+char devicefile[1024];
+
 int fd; 
 
 void readsector(void* sec,uint32_t secnum) {
@@ -100,10 +102,23 @@ void getpathelement(char* path,char* resultpath,char* element) {
 }
 
 void checkarguments(int argc,char **argv) {
-    if (argc<3) {
-        printf("usage: ls.phobos <device> <path>\n",argv[1]);
+    int n;
+    char d;
+    if (argc<2) {
+        printf("usage: ls.phobos <device> <path>\n");
         exit (-1);
     }
+    for (n=0;n<1024;n++) {
+        d=argv[1][n];
+        if (d==0) {
+            printf("Error bad formatted path. Example: /dev/nbd2:/\n");
+            exit(-1);
+        }
+        if (d==':') break;
+        devicefile[n]=d;
+    }
+    devicefile[n+1] = 0;
+    strcpy(path,&argv[1][n+1]);
 }
 
 void opendevicefile(char* devicefilepath) {
@@ -125,16 +140,13 @@ int main (int argc, char **argv) {
 
     checkarguments(argc,argv);
     
-    opendevicefile(argv[1]);
+    opendevicefile(devicefile);
     
     readsector(&bootsector,0);
 
     dirsectornumber = 1;
     
     readsector(&dirsector,bootsector.sut_size+dirsectornumber);
-    
-    
-    strcpy(path,argv[2]);
 
     strcpy(resultpath,path);
 
