@@ -59,7 +59,6 @@ DIRECTORYENTRY* findentry (uint8_t *name) {
     int n;
     int cont;
     do {
-        printf("findentry in %u\n",dirsectornumber);
         cont = 0;
         for (n=0;n<4;n++) {
            if((dirsector.entry[n].type!=DELETED_ENTRY)
@@ -103,7 +102,6 @@ void findfreesector() {
             writesector(&sutsector,1+n);
             exdirsectornumber = ((n*512)+m)+1;
             readsector(&exdirsector,bootsector.sut_size+exdirsectornumber);
-            printf("allocated %u sector\n",exdirsectornumber);
             return;
         }
     }
@@ -175,31 +173,25 @@ int main (int argc, char **argv) {
         
         getpathelement(path,resultpath,element);
         
-        printf("%s -> %s -> %s \n",path,resultpath,element);
-        
         memcpy(&elementdirsector,&dirsector,512);
         
         if ((direntry = findentry(element))==NULL){
             if (strlen(resultpath)>0) {
                 close(fd);
-                printf("error path element not found: %s\n",element);
+                printf("%s not found\n",element);
                 return -1;
             }
             else {
-                printf("CREANDO CARPETA: %s\n",element);
                 memcpy(&dirsector,&elementdirsector,512);
                 if ((direntry = findemptyentry())==NULL) {
-                    printf("no room in elementdirsector %s\n",element);
-                    printf("allocating extension dirsector\n");
                     findfreesector();
                     if (!exdirsectornumber) {
+                        close(fd);
                         printf("Error no more space in disk\n");
                         return -1;
                     }
-                    printf("linking extension dirsector\n");
                     dirsector.down_sector = exdirsectornumber;
                     writesector(&dirsector,bootsector.sut_size+dirsectornumber);
-                    printf("updated %u\n",dirsectornumber);
                     exdirsector.up_sector = dirsectornumber;
                     exdirsector.up_index = 0;
                     exdirsector.down_sector = 0;
@@ -212,9 +204,9 @@ int main (int argc, char **argv) {
                     dirsectorindex=0;
                     direntry = &(dirsector.entry[0]);
                 }
-                printf("allocating the new dirsector\n");
                 findfreesector();
                 if (!exdirsectornumber) {
+                    close(fd);
                     printf("Error no more space in disk\n");
                     return -1;
                 }
@@ -230,18 +222,16 @@ int main (int argc, char **argv) {
                 direntry->sector=exdirsectornumber;
                 direntry->type=DIRECTORY_ENTRY;
                 writesector(&dirsector,bootsector.sut_size+dirsectornumber);
-                printf("updated %u\n",dirsectornumber);
                 return 0;
             }
         }
         if (direntry->type==DIRECTORY_ENTRY) {
-            printf("entering element: %s\n",element);
             dirsectornumber = direntry->sector;
             readsector(&dirsector,bootsector.sut_size+direntry->sector);
         }
         else {
             close(fd);
-            printf("error not directory in path\n");
+            printf("%s is not a directory\n",element);
             return -1;            
         }
         strcpy(path,resultpath);
