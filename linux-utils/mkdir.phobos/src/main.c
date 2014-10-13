@@ -182,6 +182,7 @@ int main (int argc, char **argv) {
                 return -1;
             }
             else {
+                printf("creating directory %s\n",argv[2]);
                 memcpy(&dirsector,&elementdirsector,512);
                 if ((direntry = findemptyentry())==NULL) {
                     findfreesector();
