@@ -1,4 +1,10 @@
-//NOT WORKING YET
+// NOT FULLY IMPLEMENTED
+//  AVAILABLE vfs -> phobos
+//  NOT AVAILABLE phobos -> vfs
+//  NOT AVAILABLE phobos -> phobos
+//  NEVER AVAILABLE vfs -> vfs
+
+
 
 #include <stdio.h>
 #include <stdlib.h>
