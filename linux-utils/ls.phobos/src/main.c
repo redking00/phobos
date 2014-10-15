@@ -35,6 +35,14 @@ void readsector(void* sec,uint32_t secnum) {
     }    
 }
 
+void checkisphobosfs(){
+    if(strcmp(bootsector.fsid,"PHOBOSFS")){
+        close(fd);
+        printf("No phobos filesystem detected\n");
+        exit(-1);
+    }
+}
+
 DIRECTORYENTRY* findentry (uint8_t *name) {
     int n;
     int cont;
@@ -143,6 +151,8 @@ int main (int argc, char **argv) {
     opendevicefile(devicefile);
     
     readsector(&bootsector,0);
+    
+    checkisphobosfs();
 
     dirsectornumber = 1;
     

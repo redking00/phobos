@@ -40,6 +40,11 @@ void writesector(void* sec,uint32_t secnum) {
         close(fd);
         perror("read error: ");
         exit(-1);
+    } 
+    if(fsync(fd)<0) {
+        close(fd);
+        perror("fsync error: ");
+        exit(-1);
     }    
 }
 

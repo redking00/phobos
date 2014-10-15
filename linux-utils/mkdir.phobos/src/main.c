@@ -53,7 +53,20 @@ void writesector(void* sec,uint32_t secnum) {
         close(fd);
         perror("read error: ");
         exit(-1);
+    }
+    if(fsync(fd)<0) {
+        close(fd);
+        perror("fsync error: ");
+        exit(-1);
     }    
+}
+
+void checkisphobosfs(){
+    if(strcmp(bootsector.fsid,"PHOBOSFS")){
+        close(fd);
+        printf("No phobos filesystem detected\n");
+        exit(-1);
+    }
 }
 
 DIRECTORYENTRY* findentry (uint8_t *name) {
@@ -173,6 +186,8 @@ int main (int argc, char **argv) {
     opendevicefile(devicefile);
     
     readsector(&bootsector,0);
+    
+    checkisphobosfs();
 
     dirsectornumber = 1;
     
