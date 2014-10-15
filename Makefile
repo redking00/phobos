@@ -1,5 +1,5 @@
-#INSTALL_VDI_PATH = /home/diego/VirtualBox\ VMs/phobos/phobos.vdi
-INSTALL_VDI_PATH = /WinDesktop/phobos.vdi
+INSTALL_VDI_PATH = /home/diego/VirtualBox\ VMs/phobos/phobos.vdi
+#INSTALL_VDI_PATH = /WinDesktop/phobos.vdi
 
 all: s-kernel-build s-linux-utils-build s-kernel-install
 

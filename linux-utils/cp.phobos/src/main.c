@@ -109,7 +109,6 @@ void findfreesector() {
             sutsector[m]=1;
             writesector(&sutsector,1+n);
             exdirsectornumber = ((n*512)+m)+1;
-            readsector(&exdirsector,bootsector.sut_size+exdirsectornumber);
             return;
         }
     }
