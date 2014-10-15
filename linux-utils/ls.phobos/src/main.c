@@ -63,7 +63,7 @@ void listdir() {
             if (dirsector.entry[n].type>0){
                 switch(dirsector.entry[n].type){
                     case DIRECTORY_ENTRY: printf("[DIR] %s\n",dirsector.entry[n].name); break;    
-                    case FILE_ENTRY: printf("[FILE] %s\n",dirsector.entry[n].name); break;   
+                    case FILE_ENTRY: printf("[FILE] %s %u bytes\n",dirsector.entry[n].name,dirsector.entry[n].size); break;   
                     default: printf("[UNKN] %s\n",dirsector.entry[n].name);
                 }
                 
