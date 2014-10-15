@@ -29,34 +29,37 @@ char path[1024];
 char resultpath[1024];
 char element[116];
 
-int sourcefile;
-int fd;
+int sourcefile=-1;
+int fd=-1;
+
+void closefiles() {
+    if (fd>=0) close(fd);
+    if (sourcefile>=0) close(sourcefile);
+}
 
 void readsector(void* sec,uint32_t secnum) {
-    printf("reading sector: %u\n",secnum);
+//    printf("reading sector: %u\n",secnum);
     if (lseek(fd,secnum*512,SEEK_SET)<0){
-        close(sourcefile);
-        close(fd);
+        closefiles();
         perror("lseek error: ");
         exit(-1);
     }
     if(read(fd,sec,512)<0) {
-        close(sourcefile);
-        close(fd);
+        closefiles();
         perror("read error: ");
         exit(-1);
     }    
 }
 
 void writesector(void* sec,uint32_t secnum) {
-    printf("writting sector: %u\n",secnum);
+//    printf("writting sector: %u\n",secnum);
     if (lseek(fd,secnum*512,SEEK_SET)<0){
-        close(fd);
+        closefiles();
         perror("lseek error: ");
         exit(-1);
     }
     if(write(fd,sec,512)<0) {
-        close(fd);
+        closefiles();
         perror("write error: ");
         exit(-1);
     }    
@@ -100,7 +103,7 @@ DIRECTORYENTRY* findemptyentry () {
 }
 
 void findfreesector() {
-    printf("findfreesector\n");
+//    printf("findfreesector\n");
     int n,m;
     exdirsectornumber = 0;
     for (n=0;n<bootsector.sut_size;n++) {
@@ -112,6 +115,9 @@ void findfreesector() {
             return;
         }
     }
+    closefiles();
+    printf("Error no more space in disk\n");
+    exit(-1);
 }
 
 void getpathelement(char* path,char* resultpath,char* element) {
@@ -177,14 +183,14 @@ void opendevicefile(char* devicefilepath) {
     }
     
     if ((ioctl(fd,BLKGETSIZE,&totalsectors)<0)||(totalsectors==0)) {
-        close(fd);
+        closefiles();
         printf("Error getting block info in %s, is device mounted?\n",devicefilepath);
         exit(-1);
     }
 }
 
 int main(int argc, char** argv) {
-    printf("cp.phobos\n");
+//    printf("cp.phobos\n");
     checkarguments(argc,argv);
     opensourcefile(argv[1]);
     opendevicefile(devicefile);
@@ -205,8 +211,7 @@ int main(int argc, char** argv) {
         
         if ((direntry = findentry(element))==NULL){
             if (strlen(resultpath)>0) {
-                close(fd);
-                close(sourcefile);
+                closefiles();
                 printf("%s not found\n",element);
                 return -1;
             }
@@ -216,8 +221,7 @@ int main(int argc, char** argv) {
                 if ((direntry = findemptyentry())==NULL) {
                     findfreesector();
                     if (!exdirsectornumber) {
-                        close(fd);
-                        close(sourcefile);
+                        closefiles();
                         printf("Error no more space in disk\n");
                         return -1;
                     }
@@ -246,8 +250,7 @@ int main(int argc, char** argv) {
 
                 findfreesector();
                 if (!exdirsectornumber) {
-                    close(sourcefile);
-                    close(fd);
+                    closefiles();
                     printf("Error no more space in disk\n");
                     return -1;
                 }                    
@@ -256,14 +259,14 @@ int main(int argc, char** argv) {
                 direntry->type=FILE_ENTRY;
                 direntry->size=sourcesize;
                 writesector(&dirsector,bootsector.sut_size+dirsectornumber);
-                printf("write file entry\n");
+//                printf("write file entry\n");
                 
                 ((DATASECTOR*)&exdirsector)->up_sector = dirsectornumber;
                 ((DATASECTOR*)&exdirsector)->up_index = dirsectorindex;
                 ((DATASECTOR*)&exdirsector)->down_sector = 0;
                 read(sourcefile,&(((DATASECTOR*)&exdirsector)->data),(sourcesize>500)? 500:sourcesize);
                 writesector(&exdirsector,bootsector.sut_size+exdirsectornumber);
-                printf("write datasector 0\n");
+//                printf("write datasector 0\n");
 
                 
                 if (steps>0)
@@ -272,8 +275,7 @@ int main(int argc, char** argv) {
                     elementdirsectornumber=exdirsectornumber;
                     findfreesector();
                     if (!exdirsectornumber) {
-                        close(fd);
-                        close(sourcefile);
+                        closefiles();
                         printf("Error no more space in disk\n");
                         return -1;
                     }
@@ -283,22 +285,17 @@ int main(int argc, char** argv) {
                     ((DATASECTOR*)&exdirsector)->down_sector = 0;
                     read(sourcefile,&(((DATASECTOR*)&exdirsector)->data),500);
                     writesector(&exdirsector,bootsector.sut_size+exdirsectornumber);
-                    printf("write datasector %u\n",n+1);
-/*
-
+//                    printf("write datasector %u\n",n+1);
                     ((DATASECTOR*)&elementdirsector)->down_sector = exdirsectornumber;
                     writesector(&elementdirsector,bootsector.sut_size+elementdirsectornumber);
-                    printf("update datasector %u\n",n);
-                    
-                    
-*/
+//                    printf("update datasector %u\n",n);
                 }
                 if(remainder>0) {
                     memcpy (&elementdirsector,&exdirsector,512);
                     elementdirsectornumber=exdirsectornumber;
                     findfreesector();
                     if (!exdirsectornumber) {
-                        close(fd);
+                        closefiles();
                         printf("Error no more space in disk\n");
                         return -1;
                     }
@@ -307,14 +304,10 @@ int main(int argc, char** argv) {
                     ((DATASECTOR*)&exdirsector)->down_sector = 0;
                     read(sourcefile,&(((DATASECTOR*)&exdirsector)->data),remainder);
                     writesector(&exdirsector,bootsector.sut_size+exdirsectornumber);
-                    printf("write datasector remainder\n");
-/*
-
+//                    printf("write datasector remainder\n");
                     ((DATASECTOR*)&elementdirsector)->down_sector = exdirsectornumber;
                     writesector(&elementdirsector,bootsector.sut_size+elementdirsectornumber);
-                    printf("update datasector remainder-1\n");
-                    
-*/
+//                    printf("update datasector remainder-1\n");
                 }
                 return 0;
             }
@@ -324,16 +317,14 @@ int main(int argc, char** argv) {
             readsector(&dirsector,bootsector.sut_size+direntry->sector);
         }
         else {
-            close(fd);
-            close(sourcefile);
+            closefiles();
             printf("%s is not a directory\n",element);
             return -1;            
         }
         strcpy(path,resultpath);
     }
     
-    close(fd);
-    close(sourcefile);
+    closefiles();
     return (0);
 }
 
