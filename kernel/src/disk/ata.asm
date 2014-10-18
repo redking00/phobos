@@ -1,3 +1,7 @@
+; TO DO 
+; FIRST ARGUMENT IS BUSNUMBER NOW ALWAYS 1 (ATA.H)
+; MUST IMPLEMENT ERROR DETECTION AND RESULT VALUE
+
 BITS 32;
 
 GLOBAL ata_lba_read;
@@ -12,10 +16,10 @@ ata_lba_read:
 
 	       push ebp             
 	       mov ebp,esp
-	       mov eax,[ebp+32]
-	       mov ecx,[ebp+40]
+	       mov eax,[ebp+36]
+	       mov ecx,[ebp+44]
 	       mov edi,ecx
-	       mov ecx,[ebp+36]
+	       mov ecx,[ebp+40]
 
 
                and eax, 0x0FFFFFFF

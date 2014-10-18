@@ -11,13 +11,12 @@
 
 //	00100000 - 0010FFFF API POINTERS
 //	00110000 - 001FFFFF KERNEL
-//	00200000 - 0024FFFF DISK
-//	00250000 - FFFFFFFF USER
+//	00200000 - FFFFFFFF USER
 
 void export_api() {
 	// INIT KERNEL API
 	*(ADDR_TERMINAL_PRINTF)=(uint32_t)terminal_printf;
-
+	*(ADDR_FILE_OPEN)=(uint32_t)file_open;
 }
 
 void kernel_main()
