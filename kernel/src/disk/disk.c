@@ -199,7 +199,6 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
                     return -1;            
                 }
                 else {
-                    terminal_printf((TEXTPOINTER)"opening file!!\n");
                     for(int k=0;k<32;k++) {
                         if (files[k].status!=FILE_STATUS_CLOSE) {
                             files[k].status=FILE_STATUS_READY;
