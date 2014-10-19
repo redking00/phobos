@@ -14,3 +14,7 @@ void terminal_init();
 void terminal_printf(const TEXTPOINTER,...);
 
 uint16_t str_equal(TEXTPOINTER,TEXTPOINTER,uint16_t);
+
+void strcpy(TEXTPOINTER, TEXTPOINTER);
+
+uint32_t strlen(TEXTPOINTER);

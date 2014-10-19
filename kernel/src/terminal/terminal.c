@@ -116,6 +116,19 @@ uint16_t str_equal(TEXTPOINTER str1, TEXTPOINTER str2 ,uint16_t n) {
         if ((*(str1+i)!=*(str2+i))
                 ||((*(str1+i)==0)&&(*(str2+i)!=0))
                 ||((*(str2+i)==0)&&(*(str1+i)!=0)))return 0;
+        else if (*(str1+i)==0) return 1;
     }
     return 1;
+}
+
+void strcpy(TEXTPOINTER dst, TEXTPOINTER src) {
+    int n=0;
+    while (*(src+n)!=0) {*(dst+n)=*(src+n);n++;}
+    
+}
+
+uint32_t strlen(TEXTPOINTER src) {
+    uint32_t n=0;
+    while (*(src+n)!=0) {n++;}
+    return n;
 }
