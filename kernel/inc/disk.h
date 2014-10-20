@@ -44,8 +44,11 @@ typedef struct filedescriptor_t {
     uint32_t status;
     uint8_t path[1024];
     uint32_t mode;
-    uint32_t position;
-    uint32_t sector;
+    uint32_t entry_sector;
+    uint32_t entry_index;
+    uint32_t first_sector;
+    uint32_t current_sector;
+    uint32_t current_position;
     uint32_t size;
 }FILEDESCRIPTOR;
 

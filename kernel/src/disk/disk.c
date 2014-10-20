@@ -51,22 +51,22 @@ int32_t disk_read (DISK* disk,uint32_t sectornumber, uint16_t nsectors, void* bu
 
 
 //----------------------------------------------------------------------
-DIRECTORYENTRY* findentry (DISK* disk, uint8_t *name,DIRECTORYSECTOR* dirsector,uint32_t* dirsectornumber) {
+int32_t findentry (DISK* disk, TEXTPOINTER name,DIRECTORYSECTOR* dirsector,uint32_t* dirsectornumber) {
     int n;
     int cont;
     do {
         cont = 0;
         for (n=0;n<4;n++) {
-           if((dirsector->entry[n].type!=DELETED_ENTRY)
-                   &&(str_equal(name,dirsector->entry[n].name,116))) return &(dirsector->entry[n]);
+            if((dirsector->entry[n].type!=DELETED_ENTRY)
+                    &&(str_equal(name,dirsector->entry[n].name,116))) return n;
         }
         if (dirsector->down_sector>0) {
             *dirsectornumber = dirsector->down_sector;
-            disk_read(disk,disk->bootsector.sut_size+dirsector->down_sector,1,&dirsector);
+            disk_read(disk,disk->bootsector.sut_size+dirsector->down_sector,1,dirsector);
             cont=1;
         } 
     }   while(cont);
-    return NULL;
+    return -1;
 }
 
 void getpathelement(TEXTPOINTER path,TEXTPOINTER resultpath,TEXTPOINTER element) {
@@ -90,6 +90,7 @@ void getpathelement(TEXTPOINTER path,TEXTPOINTER resultpath,TEXTPOINTER element)
         m++;
         n++;
     }
+    resultpath[m]=0;
     if(str_equal(resultpath,(TEXTPOINTER)"/",2)) resultpath[0]=0;
 }
 
@@ -150,6 +151,7 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
     DIRECTORYENTRY* direntry;
     DIRECTORYSECTOR dirsector;
     uint32_t dirsectornumber;
+    int32_t entrynumber;
     uint8_t d;
     uint32_t n;
     uint8_t devicefile[1024];
@@ -185,10 +187,12 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
     while (strlen(resultpath)>0) {
         getpathelement(path,resultpath,element);
         if (strlen(element)!=0) {
-            if ((direntry = findentry(disk,element,&dirsector,&dirsectornumber))==NULL){
+            entrynumber = findentry(disk,element,&dirsector,&dirsectornumber);
+            if (entrynumber  <0 ){
                 terminal_printf((TEXTPOINTER)"%s not found\n",element);
                 return -1;
             }
+            direntry = &(dirsector.entry[entrynumber]);
             if (direntry->type==DIRECTORY_ENTRY) {
                 dirsectornumber = direntry->sector;
                 disk_read(disk,disk->bootsector.sut_size+direntry->sector,1,&dirsector);
@@ -200,13 +204,17 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
                 }
                 else {
                     for(int k=0;k<32;k++) {
-                        if (files[k].status!=FILE_STATUS_CLOSE) {
+                        if (files[k].status==FILE_STATUS_CLOSE) {
                             files[k].status=FILE_STATUS_READY;
                             strcpy(files[k].path,filepath);
                             files[k].mode = mode;
-                            files[k].position = 0;
-                            files[k].sector = direntry->sector;
+                            files[k].entry_sector = dirsectornumber;
+                            files[k].entry_index = entrynumber;
+                            files[k].first_sector = direntry->sector;
+                            files[k].current_sector = direntry->sector;
+                            files[k].current_position = 0;
                             files[k].size = direntry->size; 
+                            terminal_printf((TEXTPOINTER)"file opened : %s\n",element);
                             return k;
                         }
                     }
