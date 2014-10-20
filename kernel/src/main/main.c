@@ -24,8 +24,8 @@ void kernel_main()
 {
     terminal_init();
 
-    terminal_printf((TEXTPOINTER)"Phobos v%u.%u - %s\n",VERSION_MAJOR,VERSION_MINOR,VERSION_ALIAS);
+    terminal_printf((ASCIISTRING)"Phobos v%u.%u - %s\n",VERSION_MAJOR,VERSION_MINOR,VERSION_ALIAS);
 
     disk_init();
-   
+    
 }

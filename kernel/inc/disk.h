@@ -55,6 +55,6 @@ typedef struct filedescriptor_t {
 
 void disk_init();
 
-int32_t file_open(TEXTPOINTER path,uint32_t mode);
+int32_t file_open(ASCIISTRING path,uint32_t mode);
 
 void file_close(int32_t fileid);

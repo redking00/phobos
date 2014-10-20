@@ -21,8 +21,8 @@ uint32_t disk_autodetect () {
         if ((mbr.part[n].total_sectors>0)
                 &&(mbr.part[n].total_sectors!=mbr.part[n].first_sector)) {
             ide_read(1,mbr.part[n].first_sector,1,&(disks[ndisk].bootsector));
-            if (str_equal((TEXTPOINTER)"PHOBOSFS",disks[ndisk].bootsector.fsid,8)) {
-                terminal_printf((TEXTPOINTER)"IDE 1 Partition %u [%u MB] VolumeID: %s\n",
+            if (str_equal((ASCIISTRING)"PHOBOSFS",disks[ndisk].bootsector.fsid,8)) {
+                terminal_printf((ASCIISTRING)"IDE 1 Partition %u [%u MB] VolumeID: %s\n",
                         (n+1),(mbr.part[n].total_sectors*512)/0x100000,
                         disks[ndisk].bootsector.volumeid);
                 disks[ndisk].status = DISK_STATUS_READY;
@@ -51,7 +51,7 @@ int32_t disk_read (DISK* disk,uint32_t sectornumber, uint16_t nsectors, void* bu
 
 
 //----------------------------------------------------------------------
-int32_t findentry (DISK* disk, TEXTPOINTER name,DIRECTORYSECTOR* dirsector,uint32_t* dirsectornumber) {
+int32_t findentry (DISK* disk, ASCIISTRING name,DIRECTORYSECTOR* dirsector,uint32_t* dirsectornumber) {
     int n;
     int cont;
     do {
@@ -69,7 +69,7 @@ int32_t findentry (DISK* disk, TEXTPOINTER name,DIRECTORYSECTOR* dirsector,uint3
     return -1;
 }
 
-void getpathelement(TEXTPOINTER path,TEXTPOINTER resultpath,TEXTPOINTER element) {
+void getpathelement(ASCIISTRING path,ASCIISTRING resultpath,ASCIISTRING element) {
     int n,m;
     uint8_t d;
     element[0]=0;
@@ -91,33 +91,33 @@ void getpathelement(TEXTPOINTER path,TEXTPOINTER resultpath,TEXTPOINTER element)
         n++;
     }
     resultpath[m]=0;
-    if(str_equal(resultpath,(TEXTPOINTER)"/",2)) resultpath[0]=0;
+    if(str_equal(resultpath,(ASCIISTRING)"/",2)) resultpath[0]=0;
 }
 
 
 //---------------------------------------------------------------------
 void disk_init () {
     for (int n=0;n<32;n++)files[n].status=FILE_STATUS_CLOSE;
-    terminal_printf((TEXTPOINTER)"Detecting disks...\n");
+    terminal_printf((ASCIISTRING)"Detecting disks...\n");
     if (!disk_autodetect()) {
-        terminal_printf((TEXTPOINTER)"No disks detected\n");
+        terminal_printf((ASCIISTRING)"No disks detected\n");
     }
 }
 
-DISK* getdiskbyname(TEXTPOINTER devicename) {
-    if(str_equal(devicename,(TEXTPOINTER)"/disk1",6)) {
+DISK* getdiskbyname(ASCIISTRING devicename) {
+    if(str_equal(devicename,(ASCIISTRING)"/disk1",6)) {
         if (disks[0].status==DISK_STATUS_DISABLED) return NULL;
         return &disks[0];
     }
-    else if(str_equal(devicename,(TEXTPOINTER)"/disk2",6)) {
+    else if(str_equal(devicename,(ASCIISTRING)"/disk2",6)) {
         if (disks[1].status==DISK_STATUS_DISABLED) return NULL;
         return &disks[1];
     }
-    else if(str_equal(devicename,(TEXTPOINTER)"/disk3",6)) {
+    else if(str_equal(devicename,(ASCIISTRING)"/disk3",6)) {
         if (disks[2].status==DISK_STATUS_DISABLED) return NULL;
         return &disks[2];
     }      
-    else if(str_equal(devicename,(TEXTPOINTER)"/disk4",6)) {
+    else if(str_equal(devicename,(ASCIISTRING)"/disk4",6)) {
         if (disks[3].status==DISK_STATUS_DISABLED) return NULL;
         return &disks[3];
     }    
@@ -132,9 +132,9 @@ void listdir(DISK* disk, DIRECTORYSECTOR* dirsector,uint32_t* dirsectornumber) {
         for (n=0;n<4;n++) {
             if (dirsector->entry[n].type>0){
                 switch(dirsector->entry[n].type){
-                    case DIRECTORY_ENTRY: terminal_printf((TEXTPOINTER)"[DIR ] %s\n",dirsector->entry[n].name); break;    
-                    case FILE_ENTRY: terminal_printf((TEXTPOINTER)"[FILE] %s [%u bytes]\n",dirsector->entry[n].name,dirsector->entry[n].size); break;   
-                    default: terminal_printf((TEXTPOINTER)"[UNK ] %s\n",dirsector->entry[n].name);
+                    case DIRECTORY_ENTRY: terminal_printf((ASCIISTRING)"[DIR ] %s\n",dirsector->entry[n].name); break;    
+                    case FILE_ENTRY: terminal_printf((ASCIISTRING)"[FILE] %s [%u bytes]\n",dirsector->entry[n].name,dirsector->entry[n].size); break;   
+                    default: terminal_printf((ASCIISTRING)"[UNK ] %s\n",dirsector->entry[n].name);
                 }
                 
             }
@@ -147,7 +147,7 @@ void listdir(DISK* disk, DIRECTORYSECTOR* dirsector,uint32_t* dirsectornumber) {
     }   while(cont);    
 }
 
-int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
+int32_t file_open (ASCIISTRING filepath, uint32_t mode) {
     DIRECTORYENTRY* direntry;
     DIRECTORYSECTOR dirsector;
     uint32_t dirsectornumber;
@@ -162,7 +162,7 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
     for (n=0;n<1024;n++) {
         d=filepath[n];
         if (d==0) {
-            terminal_printf((TEXTPOINTER)"Error path without disk.\n");
+            terminal_printf((ASCIISTRING)"Error path without disk.\n");
             return (-1);
         }
         if (d==':') break;
@@ -176,7 +176,7 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
     disk = getdiskbyname(devicefile);
     
     if (disk==NULL) {
-        terminal_printf((TEXTPOINTER)"Disk %s not found\n",devicefile);
+        terminal_printf((ASCIISTRING)"Disk %s not found\n",devicefile);
         return -1;
     }
     
@@ -189,7 +189,7 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
         if (strlen(element)!=0) {
             entrynumber = findentry(disk,element,&dirsector,&dirsectornumber);
             if (entrynumber  <0 ){
-                terminal_printf((TEXTPOINTER)"%s not found\n",element);
+                terminal_printf((ASCIISTRING)"%s not found\n",element);
                 return -1;
             }
             direntry = &(dirsector.entry[entrynumber]);
@@ -199,7 +199,7 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
             }
             else {
                 if (strlen(resultpath)>0) {
-                    terminal_printf((TEXTPOINTER)"%s is not a directory\n",element);
+                    terminal_printf((ASCIISTRING)"%s is not a directory\n",element);
                     return -1;            
                 }
                 else {
@@ -214,11 +214,11 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
                             files[k].current_sector = direntry->sector;
                             files[k].current_position = 0;
                             files[k].size = direntry->size; 
-                            terminal_printf((TEXTPOINTER)"file opened : %s\n",element);
+                            terminal_printf((ASCIISTRING)"file opened : %s\n",element);
                             return k;
                         }
                     }
-                    terminal_printf((TEXTPOINTER)"Not possible to open more files\n");
+                    terminal_printf((ASCIISTRING)"Not possible to open more files\n");
                     return -1;
                 }
             }
@@ -226,7 +226,7 @@ int32_t file_open (TEXTPOINTER filepath, uint32_t mode) {
         strcpy(path,resultpath);
     }
     
-    terminal_printf((TEXTPOINTER)"File not found.");
+    terminal_printf((ASCIISTRING)"File not found.");
     
     return -1;
 }
