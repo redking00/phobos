@@ -113,8 +113,8 @@ void terminal_printf(const TEXTPOINTER string,...) {
 
 uint16_t str_equal(TEXTPOINTER str1, TEXTPOINTER str2 ,uint16_t n) {
     for (unsigned  i=0;i<n;i++) {
-        if (*(str1+i)!=*(str2+i)) return 0;
-        if (*(str1+i)==0) return 1;
+        if (str1[i]!=str2[i]) return 0;
+        if (str1[i]==0) return 1;
     }
     return 1;
 }
@@ -128,6 +128,6 @@ void strcpy(TEXTPOINTER dst, TEXTPOINTER src) {
 
 uint32_t strlen(TEXTPOINTER src) {
     uint32_t n=0;
-    while (*(src+n)!=0) {n++;}
+    while (src[n]!=0) {n++;}
     return n;
 }
